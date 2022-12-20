@@ -119,9 +119,11 @@ func (lru *LRU[Key, Value]) SetEvicted(key Key, value Value) (
 }
 
 // Set or replace a value for a key.
-func (lru *LRU[Key, Value]) Set(key Key, value Value) (prev Value,
-	replaced bool) {
-	prev, replaced, _, _, _ = lru.SetEvicted(key, value)
+func (lru *LRU[Key, Value]) Set(key Key, value Value) (Value, bool) {
+	prev, replaced, _, evVal, evicted := lru.SetEvicted(key, value)
+	if !replaced {
+		return evVal, evicted
+	}
 	return prev, replaced
 }
 
@@ -131,7 +133,7 @@ func (lru *LRU[Key, Value]) Get(key Key) (value Value, ok bool) {
 	defer lru.mu.Unlock()
 	item := lru.items[key]
 	if item == nil {
-    return
+		return
 	}
 	if lru.head.next != item {
 		lru.pop(item)
@@ -157,7 +159,7 @@ func (lru *LRU[Key, Value]) Peek(key Key) (value Value, ok bool) {
 	if item := lru.items[key]; item != nil {
 		return item.value, true
 	}
-  return
+	return
 }
 
 // Delete a value for a key
@@ -166,7 +168,7 @@ func (lru *LRU[Key, Value]) Delete(key Key) (prev Value, deleted bool) {
 	defer lru.mu.Unlock()
 	item := lru.items[key]
 	if item == nil {
-    return
+		return
 	}
 	delete(lru.items, key)
 	lru.pop(item)

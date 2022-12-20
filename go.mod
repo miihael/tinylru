@@ -1,3 +1,3 @@
-module github.com/tidwall/tinylru
+module github.com/miihael/tinylru
 
 go 1.18
